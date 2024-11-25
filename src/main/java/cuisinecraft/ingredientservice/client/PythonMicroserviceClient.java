@@ -4,7 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import java.util.Map;
 
-@FeignClient(name = "python-microservice", url = "http://localhost:5000")
+@FeignClient(name = "price-lookup", url = "http://flask-app:5000")
 public interface PythonMicroserviceClient {
 
     @GetMapping("/search")
