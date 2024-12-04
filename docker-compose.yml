@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  ingredient-service:
+    container_name: ingredient-service
+    build:
+      context: .  # Use the current directory as the build context
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+    restart: always  # Restart on failure
+    networks:
+      - shared-network  # Connect to the shared network
+
+networks:
+  shared-network:
+    external: true  # Use the external shared network
