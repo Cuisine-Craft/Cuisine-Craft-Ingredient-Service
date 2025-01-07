@@ -9,6 +9,7 @@ services:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: prod
+      PRICE_LOOKUP_URL: ${PRICE_LOOKUP_URL:-http://PriceLookup:5000}
     restart: always  # Restart on failure
     networks:
       - shared-network  # Connect to the shared network

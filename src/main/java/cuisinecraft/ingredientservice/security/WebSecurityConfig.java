@@ -26,6 +26,12 @@ public class WebSecurityConfig {
             "/swagger-ui.html",
             "/swagger-ui/**"};
 
+    private static final String[] ACTUATOR_ENDPOINTS = {
+            "/actuator/**",
+            "/actuator/prometheus/**",
+            "/actuator/metrics/**"
+    };
+
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity,
                                            AuthenticationEntryPoint authenticationEntryPoint,
@@ -38,6 +44,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(registry ->
                         registry.requestMatchers(HttpMethod.GET, "/ingredients/**" ).permitAll()
                                 .requestMatchers(SWAGGER_UI_RESOURCES).permitAll()
+                                .requestMatchers(ACTUATOR_ENDPOINTS).permitAll()  // Added this line
                                 .anyRequest().authenticated()
                 )
                 .exceptionHandling(configure -> configure.authenticationEntryPoint(authenticationEntryPoint))
