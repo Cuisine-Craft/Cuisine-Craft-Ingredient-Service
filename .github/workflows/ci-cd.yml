@@ -1,4 +1,4 @@
-name: Test, Build, and Push to Artifact Registry (Gradle)
+name: Test, Build, and Push to Container Registry (Gradle)
 
 on:
   push:
@@ -30,24 +30,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      # Step 4: Build and Test with Gradle
+      # Step 4: Grant execute permission for Gradle wrapper
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x ./gradlew
+
+      # Step 5: Build and Test with Gradle
       - name: Build and Test with Gradle
         run: ./gradlew clean build
-      # Step 5: Authenticate with Google Cloud
+
+      # Step 6: Authenticate with Google Cloud
       - name: Authenticate with Google Cloud
         uses: google-github-actions/setup-gcloud@v1
         with:
           project_id: cuisinecraft  # Replace with your Google Cloud project ID
           service_account_key: ${{ secrets.GCLOUD_KEY }}
 
-      # Step 6: Configure Docker for Container Registry
+      # Step 7: Configure Docker for Container Registry
       - name: Configure Docker for Container Registry
         run: gcloud auth configure-docker
 
-      # Step 7: Build the Docker image
+      # Step 8: Build the Docker image
       - name: Build Docker Image
-        run: docker build -t gcr.io/cuisinecraft/cuisine-craft-ingredient-service:latest
+        run: docker build -t gcr.io/cuisinecraft/cuisine-craft-ingredient-service:latest .
 
-      # Step 8: Push the Docker image to Container Registry
+      # Step 9: Push the Docker image to Container Registry
       - name: Push Docker Image
         run: docker push gcr.io/cuisinecraft/cuisine-craft-ingredient-service:latest
