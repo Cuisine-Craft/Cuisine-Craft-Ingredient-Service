@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingredient-service
+  labels:
+    app: ingredient-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ingredient-service
+  template:
+    metadata:
+      labels:
+        app: ingredient-service
+    spec:
+      containers:
+        - name: ingredient-service
+          image: gcr.io/cuisinecraft/cuisine-craft-ingredient-service:latest
+          ports:
+            - containerPort: 8081
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
+            - name: PRICE_LOOKUP_URL
+              value: "http://pricelookup-service:5000"
+          resources:
+            requests:
+              cpu: "100m"  # Minimum CPU to allocate
+              memory: "128Mi"  # Minimum memory to allocate
+            limits:
+              cpu: "500m"  # Maximum CPU that the container can use
+              memory: "512Mi"  # Maximum memory that the container can use
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ingredient-service
+spec:
+  selector:
+    app: ingredient-service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: LoadBalancer
