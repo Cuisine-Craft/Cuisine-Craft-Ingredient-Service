@@ -1,9 +1,9 @@
-name: Build and Deploy to GKE
+name: Test, Build, and Push to Container Registry (Gradle)
 
 on:
   push:
     branches:
-      - main
+      - main  # Trigger on pushes to the main branch
 
 env:
   PROJECT_ID: cuisinecraft   # Google Cloud project ID from GitHub Secrets
@@ -12,31 +12,57 @@ env:
   IMAGE_NAME: cuisine-craft-ingredient-service # Docker image name
 
 jobs:
-  setup-build-publish:
-    name: Setup, Build, and Publish
+  test-build-push:
     runs-on: ubuntu-latest
-    environment: production
 
     steps:
-      # Step 1: Checkout Code
+      # Step 1: Check out the code
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Step 2: Setup Google Cloud CLI
-      - name: Setup gcloud CLI
+      # Step 2: Set up Java
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          java-version: 17  # Specify the Java version you use
+          distribution: temurin  # Options: 'temurin', 'zulu', etc.
+
+      # Step 3: Cache Gradle dependencies
+      - name: Cache Gradle packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      # Step 4: Grant execute permission for Gradle wrapper
+      - name: Grant execute permission for Gradle wrapper
+        run: chmod +x ./gradlew
+
+      # Step 5: Build and Test with Gradle
+      - name: Build and Test with Gradle
+        run: ./gradlew clean build
+
+      # Step 6: Authenticate with Google Cloud
+      - name: Authenticate with Google Cloud
         uses: google-github-actions/setup-gcloud@v1
         with:
-          service_account_key: ${{ secrets.GCLOUD_KEY }}  # Service account key from GitHub Secrets
-          project_id: ${{ env.PROJECT_ID }}
+          project_id: ${{ env.PROJECT_ID }}  # Replace with your Google Cloud project ID
+          service_account_key: ${{ secrets.GCLOUD_KEY }}
 
-      # Step 3: Authenticate Docker with gcloud
-      - name: Configure Docker Authentication
-        run: gcloud --quiet auth configure-docker
+      # Step 7: Get GKE Credentials using gcloud command
+      - name: Get GKE Credentials
+        run: gcloud container clusters get-credentials ${{ env.GKE_CLUSTER }} --zone ${{ env.GKE_ZONE }} --project ${{ env.PROJECT_ID }}
 
-      # Step 4: Build Docker Image
+      # Step 8: Configure Docker for Container Registry
+      - name: Configure Docker for Container Registry
+        run: gcloud auth configure-docker
+
+      # Step 9: Build the Docker image
       - name: Build Docker Image
         run: docker build -t gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest .
 
-      # Step 5: Push Docker Image to GCR
+      # Step 10: Push the Docker image to Container Registry
       - name: Push Docker Image
         run: docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.IMAGE_NAME }}:latest
